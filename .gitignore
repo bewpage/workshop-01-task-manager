@@ -1,0 +1,21 @@
+target/*
+.settings/*
+.classpath
+.project
+.factorypath
+.attach_pid*
+.idea
+*.iml
+/target
+_site/
+
+*.class
+*.jar
+*.war
+*.ear
+*.logs
+.idea/
+.eclipse
+
+# working files and folders
+Test/
