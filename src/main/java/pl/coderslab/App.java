@@ -1,7 +1,7 @@
 package pl.coderslab;
 
 /**
- * Hello world!
+ * Task Manager!
  *
  */
 public class App 
