@@ -1,17 +1,20 @@
 package pl.coderslab;
 
-import java.io.IOException;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.math.NumberUtils;
+
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
 /** Task Manager! */
 public class App {
 
   // added enums to keep all sync
+  // not used, because to problematic
   public enum OptionsEnum {
     ADD("add"),
     REMOVE("remove"),
@@ -25,20 +28,18 @@ public class App {
     }
   }
 
-  public static String[] OPTIONS = {"add", "remove", "list", "exit"};
+  /** Main constant values used in Task Manager */
+  static String FILE = "tasks.csv";
+
+  static String[] OPTIONS = {"add", "remove", "list", "exit"};
+  static String[][] TASKS;
 
   public static void main(String[] args) {
 
-    showManagerOptions();
     commandLineInterface();
-    //    String[][] tasks = readTasksFromFile("tasks.csv");
-
-    //    for (String[] value : tasks) {
-    //      System.out.println(Arrays.toString(value));
-    //    }
   }
 
-  /** show option at the beginning */
+  /** show CL option at the beginning */
   public static void showManagerOptions() {
     System.out.println(ConsoleColors.BLUE + "Please select an option:");
     for (String text : OPTIONS) {
@@ -46,42 +47,18 @@ public class App {
     }
   }
 
-  static String[][] readTasksFromFile(String filename) {
-    String[][] tasks = null;
-    try {
-      Path file = Paths.get(filename);
-      if (Files.notExists(file)) {
-        throw new IOException("Sorry, but file not exist");
-      }
-      // to have size of array
-      // first value will be number of rows and second is standard as user will have 3 option t add
-      List<String> test = Files.readAllLines(file, StandardCharsets.UTF_8);
-      tasks = new String[test.size()][3];
-
-      for (int i = 0; i < test.size(); i++) {
-        int rowLength = test.get(i).split(",").length;
-        if (rowLength > 3) {
-          // check what to do with user message with comma inside
-          // it should be checked when user adding text if we have extra comma
-          System.out.println("this row is problem" + test.get(i));
-        } else {
-          tasks[i] = test.get(i).split(",");
-        }
-      }
-
-    } catch (IOException e) {
-      System.out.println("File not found");
-      e.printStackTrace();
-    }
-    return tasks;
-  }
-
+  /** Main logic for Task Manager */
   public static void commandLineInterface() {
+    // get tasks data from file
+    TASKS = readTasksFromFile(FILE);
+    // show CL options
+    showManagerOptions();
     try (Scanner scan = new Scanner(System.in)) {
       String text;
       do {
         text = scan.nextLine();
-        System.out.println("selected: " + text);
+        System.out.println(ConsoleColors.YELLOW_UNDERLINED + "selected: " + text);
+        System.out.println(ConsoleColors.RESET);
 
         switch (text.toLowerCase()) {
           case "add":
@@ -93,35 +70,220 @@ public class App {
           case "list":
             listAllTasks();
             break;
+          case "exit":
+            // end of apps and write all changes to file
+            writeDataToFile(TASKS, FILE);
+            System.out.println(ConsoleColors.RED + "Bye, bye!");
+            System.out.println(ConsoleColors.RESET);
+            System.exit(0);
+            break;
           default:
             System.out.println("Please select a correct option.");
         }
+        showManagerOptions();
       } while (!text.equalsIgnoreCase("exit"));
-      System.out.println("Bye, bye!");
     } catch (Exception e) {
       e.printStackTrace();
     }
   }
 
-  public static boolean exist(String test) {
-
-    for (OptionsEnum value : OptionsEnum.values()) {
-      if (value == OptionsEnum.valueOf(test)) {
-        return true;
+  /**
+   * read all tasks from file
+   *
+   * @param filename String
+   * @return String[][]
+   */
+  public static String[][] readTasksFromFile(String filename) {
+    String[][] data = null;
+    try {
+      Path file = Paths.get(filename);
+      if (Files.notExists(file)) {
+        throw new IOException(
+            "Sorry, but file not exist, do you want to continue? or type 'exit' to finish");
       }
+      // to have size of array
+      // first value will be number of rows and second is standard as user will have 3 option t add
+      List<String> test = Files.readAllLines(file, StandardCharsets.UTF_8);
+      data = new String[test.size()][3];
+
+      for (int i = 0; i < test.size(); i++) {
+        int rowLength = test.get(i).split(",").length;
+        if (rowLength > 3) {
+          // check what to do with user message with comma inside
+          // it should be checked when user adding text if we have extra comma
+          System.out.println("this row is problem" + test.get(i));
+        } else {
+          data[i] = test.get(i).split(",");
+        }
+      }
+
+    } catch (IOException e) {
+      System.out.println(ConsoleColors.RED + e.getMessage());
+      System.out.println(ConsoleColors.RESET);
+      e.printStackTrace();
+    }
+    return data;
+  }
+
+  /** Add Task collect data from user and update tasks array */
+  public static void addTask() {
+    StringBuilder data = new StringBuilder();
+    try {
+      // Not close scanner to here only in interface function
+      Scanner scan = new Scanner(System.in);
+      // add description, need as well some kind validation if user
+      // use comma in string
+      System.out.println("Please add task description:");
+      String description = scan.nextLine();
+      data.append(description).append(", ");
+
+      // this will need maybe some date validation, but for now
+      // I will focus on app workflow
+      System.out.println("Please add task due date:");
+      String dueDate = scan.nextLine();
+      data.append(dueDate).append(", ");
+
+      // Is your task important? (true / false)
+      System.out.println("Is your task important? (true / false)");
+      String isImportant = scan.nextLine();
+      data.append(isImportant);
+      // here add values to the file
+      updateTasksArray(data.toString());
+
+    } catch (NoSuchElementException e) {
+      e.printStackTrace();
+    }
+  }
+
+  /**
+   * Update Tasks Array
+   *
+   * @param data String
+   */
+  public static void updateTasksArray(String data) {
+    TASKS = ArrayUtils.add(TASKS, data.split(","));
+  }
+
+  /**
+   * check if task id number is valid and bigger than zero
+   *
+   * @param input String
+   * @return boolean
+   */
+  public static boolean isCorrectNumberValue(String input) {
+    if (NumberUtils.isDigits(input)) {
+      return Integer.parseInt(input) >= 0;
     }
     return false;
   }
 
-  public static void addTask() {
-    System.out.println("this is add task method");
-  }
-
+  /** remove task method ask user to type task number and execute task remove */
   public static void removeTask() {
-    System.out.println("this is remove task method");
+    String taskId;
+
+    try {
+      Scanner scan = new Scanner(System.in);
+
+      do {
+        System.out.println("Please select number to remove:");
+        taskId = scan.nextLine();
+        if (!NumberUtils.isDigits(taskId)) {
+          System.out.println(ConsoleColors.RED_BOLD + "Sorry but this is not a number!");
+          System.out.println(ConsoleColors.RESET);
+        }
+      } while (!isCorrectNumberValue(taskId));
+
+      boolean isRemoved = false;
+
+      // remove selected task
+      if (TASKS != null) {
+        isRemoved = removeSelectedTask(Integer.parseInt(taskId));
+      }
+      if (isRemoved) {
+        System.out.printf(
+            ConsoleColors.YELLOW_UNDERLINED + "Task number %s was removed successful\n", taskId);
+        System.out.println(ConsoleColors.RESET);
+      } else {
+        System.out.println(
+            ConsoleColors.RED + "Sorry, but probably that task not exist in your list");
+        System.out.println(ConsoleColors.RESET);
+      }
+
+    } catch (InputMismatchException e) {
+      e.printStackTrace();
+    }
   }
 
+  /**
+   * Remove selected task by ID
+   *
+   * @param taskId int
+   * @return boolean
+   */
+  public static boolean removeSelectedTask(int taskId) {
+    boolean isRemoved = false;
+    // find task to remove and remove it from data
+    try {
+      if (TASKS.length > taskId) {
+        TASKS = ArrayUtils.remove(TASKS, taskId);
+        isRemoved = true;
+      }
+    } catch (IndexOutOfBoundsException e) {
+      System.out.println("Sorry but element not exist");
+    }
+    return isRemoved;
+  }
+
+  /**
+   * write changes to file
+   *
+   * @param array String[][]
+   * @param fileName String
+   */
+  public static void writeDataToFile(String[][] array, String fileName) {
+    File data = new File(fileName);
+    Path file = Paths.get(fileName);
+    // extra check if file not exist and user wants to continue,
+    // so we create that file for user
+    try {
+      if (Files.notExists(file)) {
+        Files.createFile(file);
+      }
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
+    try (PrintWriter printWriter = new PrintWriter(data)) {
+      // add data to file
+      if (ArrayUtils.isNotEmpty(TASKS)) {
+        for (String[] value : array) {
+          printWriter.println(String.join(",", value));
+        }
+      }
+
+    } catch (FileNotFoundException | NullPointerException e) {
+      e.printStackTrace();
+    }
+  }
+
+  /** show all tasks in CL */
   public static void listAllTasks() {
-    System.out.println("this is method to list all tasks");
+    StringBuilder taskText = new StringBuilder();
+
+    if (ArrayUtils.isEmpty(TASKS)) {
+      System.out.println(
+          ConsoleColors.YELLOW_UNDERLINED + "Sorry, but there is no tasks in your list!");
+      System.out.println(ConsoleColors.RESET);
+      return;
+    }
+
+    for (int i = 0; i < TASKS.length; i++) {
+      taskText.append(i).append(" : ");
+      for (int j = 0; j < TASKS[i].length; j++) {
+        taskText.append(TASKS[i][j]).append(" ");
+      }
+      taskText.append("\n");
+    }
+    System.out.println(taskText);
   }
 }
