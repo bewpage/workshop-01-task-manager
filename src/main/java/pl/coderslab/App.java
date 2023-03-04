@@ -19,8 +19,8 @@ import java.util.Scanner;
 /** Task Manager! */
 public class App {
 
-  // added enums to keep all sync
-  // not used, because to problematic
+  // test some enums to keep all sync
+  // not used for now
   public enum OptionsEnum {
     ADD("add"),
     REMOVE("remove"),
@@ -108,7 +108,7 @@ public class App {
             "Sorry, but file not exist, do you want to continue? or type 'exit' to finish");
       }
       // to have size of array
-      // first value will be number of rows and second is standard as user will have 3 option t add
+      // first value will be number of rows and second is standard as user will have 3 option to add
       List<String> test = Files.readAllLines(file, StandardCharsets.UTF_8);
       data = new String[test.size()][3];
 
@@ -135,9 +135,11 @@ public class App {
   public static void addTask() {
     StringBuilder data = new StringBuilder();
     try {
-      // Not close scanner to here only in interface function
+      // Not close scanner here only in interface function
+      // otherwise will have problem
       Scanner scan = new Scanner(System.in);
-      // add description, need as well some kind validation if user
+      // add description,
+      // need as well some kind validation if user
       // use comma in string
       System.out.println("Please add task description:");
       String description = scan.nextLine();
@@ -153,7 +155,7 @@ public class App {
       System.out.println("Is your task important? (true / false)");
       String isImportant = scan.nextLine();
       data.append(isImportant);
-      // here add values to the file
+      // here update values in the TASKS array
       updateTasksArray(data.toString());
 
     } catch (NoSuchElementException e) {
@@ -171,7 +173,7 @@ public class App {
   }
 
   /**
-   * check if task id number is valid and bigger than zero
+   * check if task id is valid number and bigger than zero
    *
    * @param input String
    * @return boolean
@@ -183,7 +185,7 @@ public class App {
     return false;
   }
 
-  /** remove task method ask user to type task number and execute task remove */
+  /** remove task method, ask user to type task number and execute task remove */
   public static void removeTask() {
     String taskId;
 
