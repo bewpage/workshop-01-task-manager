@@ -35,7 +35,7 @@ public class App {
   }
 
   /** Main constant values used in Task Manager */
-  static String FILE = "tasks.csv";
+  static final String FILE = "tasks.csv";
 
   static String[] OPTIONS = {"add", "remove", "list", "exit"};
   static String[][] TASKS;
