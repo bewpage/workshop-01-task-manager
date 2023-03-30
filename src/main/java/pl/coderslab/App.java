@@ -179,7 +179,7 @@ public class App {
    * @return boolean
    */
   public static boolean isCorrectNumberValue(String input) {
-    if (NumberUtils.isDigits(input)) {
+    if (NumberUtils.isParsable(input)) {
       return Integer.parseInt(input) >= 0;
     }
     return false;
